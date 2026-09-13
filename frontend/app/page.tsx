@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <main>
       <div className="card">
-        <div>
+        <div className="header">
           <h1>Research &amp; Blog Generator</h1>
           <p className="subtitle">
             Enter a topic and get a short, fun blog post as a PDF.
@@ -75,7 +75,7 @@ export default function Home() {
 
         {status === "done" && pdfUrl && (
           <a className="download" href={pdfUrl} download="blog.pdf">
-            Download PDF
+            Download PDF ↓
           </a>
         )}
       </div>
