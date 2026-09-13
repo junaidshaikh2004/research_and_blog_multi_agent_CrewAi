@@ -29,7 +29,10 @@ def generate(request):
     except Exception as e:
         return JsonResponse({"error": f"Crew run failed: {e}"}, status=502)
 
-    pdf_bytes = render_pdf(result.raw)
+    try:
+        pdf_bytes = render_pdf(result.raw)
+    except Exception as e:
+        return JsonResponse({"error": f"PDF rendering failed: {e}"}, status=500)
 
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="blog.pdf"'
