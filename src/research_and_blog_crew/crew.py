@@ -1,4 +1,6 @@
-from crewai import Agent, Crew, Process, Task
+import os
+
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
@@ -7,23 +9,27 @@ from typing import List
 # define the class for our crew
 @CrewBase
 class ResearchAndBlogCrew():
-    
+
     agents: list[BaseAgent]
     tasks: list[Task]
-    
+
     agents_config = "config/agents.yaml"
     tasks_config = "config/tasks.yaml"
-    
+
+    llm = LLM(model=os.environ["MODEL"])
+
     @agent
     def report_generator(self) -> Agent:
         return Agent(
-            config=self.agents_config["report_generator"]
+            config=self.agents_config["report_generator"],
+            llm=self.llm
         )
-        
+
     @agent
     def blog_writer(self) -> Agent:
         return Agent(
-            config=self.agents_config["blog_writer"]
+            config=self.agents_config["blog_writer"],
+            llm=self.llm
         )
         
     # order of task definition matters
