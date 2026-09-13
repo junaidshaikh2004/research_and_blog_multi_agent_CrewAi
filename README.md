@@ -1,55 +1,128 @@
-# ResearchAndBlogCrew Crew
+# Research & Blog Crew
 
-Welcome to the ResearchAndBlogCrew Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+A two-agent [crewAI](https://crewai.com) pipeline that takes a topic, researches it into a
+detailed report, then rewrites that report as a short, fun, easy-to-read blog post — all
+powered by a single Groq-hosted LLM.
 
-## Installation
+## How it works
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Give it a topic (e.g. `"Quantum Computing"`) and two agents run one after another in a single
+sequential crew:
 
-First, if you haven't already, install uv:
+1. **Report Generator** researches the topic and writes a ~2000-word structured report
+   (facts, trends, analogies) — kept in memory, not saved to disk.
+2. **Blog Writer** takes that report and rewrites it as a ~500-word blog post simple enough
+   for a 5-year-old to follow, with a fun heading.
+
+The blog is written to [blogs/blog.md](blogs/blog.md). No intermediate `report.md` file is
+produced — the report only exists as the input handed from the first agent's task to the second.
+
+```mermaid
+flowchart TD
+    U["User"] -->|"topic"| M["main.run()"]
+    M --> C["ResearchAndBlogCrew.crew()<br/>Process.sequential"]
+
+    subgraph Crew["Crew execution"]
+        direction TB
+        T1["Task: report_task<br/>agent: report_generator"]
+        T2["Task: blog_writing_task<br/>agent: blog_writer"]
+        T1 -->|"report (in memory)"| T2
+    end
+
+    C --> T1
+    T2 --> O["blogs/blog.md"]
+
+    LLM["Groq LLM<br/>(model from .env MODEL)"] -. used by both agents .-> T1
+    LLM -. used by both agents .-> T2
+```
+
+## Tech stack
+
+| Layer            | Tech                                                              |
+|-------------------|-------------------------------------------------------------------|
+| Agent framework  | [crewAI](https://docs.crewai.com) (`crewai[tools]`)                |
+| LLM provider     | [Groq](https://groq.com) (via `crewai.LLM` / [LiteLLM](https://docs.litellm.ai/)) |
+| Language         | Python 3.10 – 3.12                                                 |
+| Dependency mgmt  | [uv](https://docs.astral.sh/uv/)                                   |
+| Config           | YAML (`agents.yaml`, `tasks.yaml`) + `.env`                        |
+| Build backend    | Hatchling                                                          |
+
+## Model configuration
+
+The LLM is **not** hardcoded in the agent YAML. `crew.py` builds one shared `LLM` instance from
+the `MODEL` environment variable and injects it into both agents:
+
+```python
+llm = LLM(model=os.environ["MODEL"])
+```
+
+Your `.env` file (not committed) needs:
+
+```
+GROQ_API_KEY=your-groq-api-key
+MODEL=groq/openai/gpt-oss-120b
+```
+
+`MODEL` must be a model string LiteLLM recognizes in `provider/model` form (e.g.
+`groq/llama-3.3-70b-versatile`, `groq/openai/gpt-oss-120b`) and one your Groq account actually
+has access to — an invalid or unavailable model name fails with a `litellm.NotFoundError` at
+kickoff time, not at startup.
+
+## Project structure
+
+```
+src/research_and_blog_crew/
+├── main.py                  # CLI entrypoint: run(topic=None) — prompts for a topic if omitted
+├── crew.py                  # ResearchAndBlogCrew: agents, tasks, LLM wiring, crew assembly
+├── config/
+│   ├── agents.yaml           # report_generator & blog_writer: role/goal/backstory
+│   └── tasks.yaml            # report_task & blog_writing_task: description/expected_output
+└── tools/
+    └── custom_tool.py         # unused example tool template (no tools are wired to any agent)
+blogs/
+└── blog.md                   # output of the last run
+knowledge/
+└── user_preference.txt        # sample knowledge file, still has placeholder content
+```
+
+## Setup
+
+Requires Python >=3.10,<3.13 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 pip install uv
+uv sync
 ```
 
-Next, navigate to your project directory and install the dependencies:
+Create a `.env` file in the project root with `GROQ_API_KEY` and `MODEL` as shown above.
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+## Running the project
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/research_and_blog_crew/config/agents.yaml` to define your agents
-- Modify `src/research_and_blog_crew/config/tasks.yaml` to define your tasks
-- Modify `src/research_and_blog_crew/crew.py` to add your own logic, tools and specific args
-- Modify `src/research_and_blog_crew/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+Run it and you'll be prompted for a topic:
 
 ```bash
-$ crewai run
+uv run run_crew
+# Enter a topic for the report and blog: Quantum Computing
 ```
 
-This command initializes the research_and_blog_crew Crew, assembling the agents and assigning them tasks as defined in your configuration.
+`crewai run` works the same way (it shells out to `uv run run_crew` internally).
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+To run it programmatically with a fixed topic (no prompt), e.g. from another script:
 
-## Understanding Your Crew
+```python
+from research_and_blog_crew.main import run
+run("Quantum Computing")
+```
 
-The research_and_blog_crew Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+The result is written to `blogs/blog.md`, overwriting the previous run's output.
 
-## Support
+## Known limitations
 
-For support, questions, or feedback regarding the ResearchAndBlogCrew Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
-"# research_and_blog_multi_agent_CrewAi" 
+- `pyproject.toml` also exposes `train`, `replay`, and `test` scripts pointing at
+  `main.train` / `main.replay` / `main.test`, but `main.py` only implements `run()` —
+  those three commands will fail with an `ImportError` if invoked.
+- `tools/custom_tool.py` is the unmodified crewAI example tool and isn't attached to either
+  agent — both agents currently rely on the LLM's own knowledge only, with no web search or
+  other tool access.
+- `knowledge/user_preference.txt` still contains the crewAI template's placeholder ("John Doe")
+  content rather than real user preferences.
