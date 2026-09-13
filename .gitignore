@@ -1,12 +1,15 @@
 .env
-.env.local
+.env.*
+!.env.example
 __pycache__/
 .DS_Store
 
 # Python
 .venv/
 *.pyc
+db.sqlite3
 
 # Node / Next.js
 node_modules/
 .next/
+.vercel/

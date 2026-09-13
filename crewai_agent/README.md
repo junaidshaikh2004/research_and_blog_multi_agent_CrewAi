@@ -1,5 +1,8 @@
 # Research & Blog Crew
 
+Part of [ReWrite](../README.md) — this is the crewAI agent pipeline on its own, usable
+standalone (CLI) or imported directly by `backend/`.
+
 A two-agent [crewAI](https://crewai.com) pipeline that takes a topic, researches it into a
 detailed report, then rewrites that report as a short, fun, easy-to-read blog post — all
 powered by a single Groq-hosted LLM.
