@@ -44,27 +44,27 @@ def render_pdf(text: str) -> bytes:
             body = _clean(stripped[4:])
             if body:
                 pdf.set_font("Helvetica", "B", 13)
-                pdf.multi_cell(pdf.epw, 8, body)
+                pdf.multi_cell(pdf.epw, 8, body, new_x="LMARGIN", new_y="NEXT")
         elif stripped.startswith("## "):
             body = _clean(stripped[3:])
             if body:
                 pdf.set_font("Helvetica", "B", 16)
-                pdf.multi_cell(pdf.epw, 9, body)
+                pdf.multi_cell(pdf.epw, 9, body, new_x="LMARGIN", new_y="NEXT")
         elif stripped.startswith("# "):
             body = _clean(stripped[2:])
             if body:
                 pdf.set_font("Helvetica", "B", 20)
-                pdf.multi_cell(pdf.epw, 10, body)
+                pdf.multi_cell(pdf.epw, 10, body, new_x="LMARGIN", new_y="NEXT")
         elif stripped.startswith(("- ", "* ")):
             body = _clean(stripped[2:])
             if body:
                 pdf.set_font("Helvetica", "", 11)
-                pdf.multi_cell(pdf.epw, 7, f"  - {body}")
+                pdf.multi_cell(pdf.epw, 7, f"  - {body}", new_x="LMARGIN", new_y="NEXT")
         else:
             body = _clean(stripped)
             if body:
                 pdf.set_font("Helvetica", "", 11)
-                pdf.multi_cell(pdf.epw, 7, body)
+                pdf.multi_cell(pdf.epw, 7, body, new_x="LMARGIN", new_y="NEXT")
             else:
                 pdf.ln(4)
 
